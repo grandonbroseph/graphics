@@ -1,2 +1,2 @@
 # graphics
-:desktop: Powerful JavaScript graphics library for use in the browser.
+:desktop_computer: Powerful JavaScript graphics library for use in the browser.
