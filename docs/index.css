@@ -1,0 +1,12 @@
+html, body, #wrap {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: black;
+}
+
+#wrap {
+  position: relative;
+}

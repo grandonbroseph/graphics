@@ -1,0 +1,19 @@
+{
+  "name": "graphics",
+  "version": "0.0.0",
+  "description": "Powerful JavaScript graphics library for use in the browser.",
+  "author": "Brandon Semilla (https://github.com/grandonbroseph)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grandonbroseph/graphics.git"
+  },
+  "scripts": {
+    "postinstall": "npm start",
+    "start": "rollup -w -i docs/scripts/index.js -o docs/index.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^0.36.4",
+    "rollup-watch": "^2.5.0"
+  }
+}
