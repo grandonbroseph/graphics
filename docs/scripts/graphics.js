@@ -204,7 +204,7 @@ function Sprite(pos, size, display) {
     drawRotation: function (angle) {
       var el = this.el
       var ctx = this.context
-      var size = 2 * 16
+      var size = 2 * scale
       var corners = this.getCorners(size, angle)
       var x = corners.sort(function(a, b) { return a[0] - b[0] })[0][0]
       var y = corners.sort(function(a, b) { return a[1] - b[1] })[0][1]
@@ -219,7 +219,7 @@ function Sprite(pos, size, display) {
       ctx.translate(-topLeft[0], -topLeft[1])
       ctx.rotate(angle * Math.PI / 180)
       ctx.fillRect(0, 0, size, size)
-      this.size = [outerSize / 16, outerSize / 16]
+      this.size = [outerSize / scale, outerSize / scale]
     },
     rotate: function (angle) {
       this.transform.rotate(angle)
