@@ -7,93 +7,93 @@ var Vector = {
   UP_RIGHT:   [ 1,-1],
   DOWN_LEFT:  [-1, 1],
   DOWN_RIGHT: [ 1, 1],
-  add: function(a, b) {
+  add: function (a, b) {
     a[0] += b[0];
     a[1] += b[1];
     return a
   },
-  added: function(a, b) {
+  added: function (a, b) {
     return [a[0] + b[0], a[1] + b[1]]
   },
-  subtract: function(a, b) {
+  subtract: function (a, b) {
     a[0] -= b[0];
     a[1] -= b[1];
     return a
   },
-  subtracted: function(a, b) {
+  subtracted: function (a, b) {
     return [a[0] - b[0], a[1] - b[1]]
   },
-  multiply: function(a, b) {
+  multiply: function (a, b) {
     a[0] *= b[0];
     a[1] *= b[1];
     return a
   },
-  multiplied: function(a, b) {
+  multiplied: function (a, b) {
     return [a[0] * b[0], a[1] * b[1]]
   },
-  divide: function(a, b) {
+  divide: function (a, b) {
     a[0] /= b[0];
     a[1] /= b[1];
     return a
   },
-  divided: function(a, b) {
+  divided: function (a, b) {
     return [a[0] / b[0], a[1] / b[1]]
   },
-  round: function(vector) {
+  round: function (vector) {
     vector[0] = Math.round(vector[0]);
     vector[1] = Math.round(vector[1]);
   },
-  rounded: function(vector) {
+  rounded: function (vector) {
     return [Math.round(vector[0]), Math.round(vector[1])]
   },
-  invert: function(vector) {
+  invert: function (vector) {
     vector[0] *= -1;
     vector[1] *= -1;
     return vector
   },
-  inverted: function(vector) {
+  inverted: function (vector) {
     return [-vector[0], -vector[1]]
   },
-  scale: function(vector, scalar) {
+  scale: function (vector, scalar) {
     vector[0] *= scalar;
     vector[1] *= scalar;
     return vector
   },
-  scaled: function(vector, scalar) {
+  scaled: function (vector, scalar) {
     return [vector[0] * scalar, vector[1] * scalar]
   },
-  magnitude: function(vector) {
+  magnitude: function (vector) {
     return Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1])
   },
-  normalize: function(vector) {
+  normalize: function (vector) {
     var magnitude = this.magnitude(vector);
     if (!magnitude) return [0, 0]
     vector[0] /= magnitude;
     vector[1] /= magnitude;
     return vector
   },
-  normalized: function(vector) {
+  normalized: function (vector) {
     var magnitude = this.magnitude(vector);
     if (!magnitude) return [0, 0]
     return this.scaled(vector, 1 / magnitude)
   },
-  clone: function(vector) {
+  clone: function (vector) {
     return [vector[0], vector[1]]
   },
-  fromDegrees: function(degrees) {
-    var radians = (degrees - 90) * Math.PI / 180;
+  fromAngle: function (angle) {
+    var radians = (angle - 90) * Math.PI / 180;
     return [Math.cos(radians), Math.sin(radians)]
   },
-  toDegrees: function(vector) {
-    var degrees = Math.atan2(vector[1], vector[0]) * 180 / Math.PI + 90;
-    while (degrees < 0)
-      degrees += 360;
-    return degrees
+  toAngle: function (vector) {
+    var angle = Math.atan2(vector[1], vector[0]) * 180 / Math.PI + 90;
+    while (angle < 0)
+      angle += 360;
+    return angle
   },
-  getNormal: function(direction) {
+  getNormal: function (direction) {
     var n, t = typeof direction;
     if (t === 'number') {
-      n = this.fromDegrees(direction);
+      n = this.fromAngle(direction);
     } else if (t === 'object') {
       n = this.normalized(direction);
     }
@@ -288,6 +288,7 @@ Display.prototype = {
     }
     el.width  = width;
     el.height = height;
+    this.rect = el.getBoundingClientRect();
     this.unit = width / scale;
     this.draw();
   },
@@ -349,6 +350,46 @@ function Sprite(pos, size, display) {
       this.draw();
       return this
     },
+    getCorners: function(size, angle) {
+      angle = (angle + 90);
+      var outerSize = Vector.magnitude([size, size]);
+      var topLeft = [0, 0];
+      var topRight = Vector.scaled(Vector.fromAngle(angle), size);
+      var bottomLeft = Vector.scaled(Vector.fromAngle(angle + 90), size);
+      var bottomRight = Vector.scaled(Vector.fromAngle(angle + 45), outerSize);
+      var corners = [topLeft, topRight, bottomLeft, bottomRight];
+      return corners
+    },
+    drawRotation: function (angle) {
+      var el = this.el;
+      var ctx = this.context;
+      var size = 2 * 16;
+      var corners = this.getCorners(size, angle);
+      var x = corners.sort(function(a, b) { return a[0] - b[0] })[0][0];
+      var y = corners.sort(function(a, b) { return a[1] - b[1] })[0][1];
+      var topLeft = [x, y];
+      var x = corners.sort(function(a, b) { return b[0] - a[0] })[0][0];
+      var y = corners.sort(function(a, b) { return b[1] - a[1] })[0][1];
+      var bottomRight = [x, y];
+      var outerSize = Math.abs(bottomRight[1] - topLeft[1]);
+      el.width = el.height = outerSize;
+      ctx.clearRect(0, 0, size, size);
+      ctx.fillStyle = _fill;
+      ctx.translate(-topLeft[0], -topLeft[1]);
+      ctx.rotate(angle * Math.PI / 180);
+      ctx.fillRect(0, 0, size, size);
+      this.size = [outerSize / 16, outerSize / 16];
+    },
+    rotate: function (angle) {
+      this.transform.rotate(angle);
+      this.drawRotation(this.transform.rotation);
+      return this
+    },
+    setRotation: function (angle) {
+      this.transform.setRotation(angle);
+      this.drawRotation(this.transform.rotation);
+      return this
+    },
     draw: function () {
       var unit = this.display.unit;
       var ctx = this.display.context;
@@ -403,10 +444,6 @@ Sprite.prototype = {
   },
   update: function () {
     this.redraw();
-  },
-  rotate: function (angle) {
-    this.transform.rotate(angle);
-    return this
   }
 };
 
@@ -414,47 +451,51 @@ function Transform() {
   this.translation = [0, 0];
   this.rotation    = 0;
   this.scaling     = [1, 1];
-  Object.assign(this, {
-    translate: function(translation) {
-      Vector.add(this.translation, translation);
-    },
-    translateX: function(translationX) {
-      this.translation[0] += translationX;
-    },
-    translateY: function(translationY) {
-      this.translation[1] += translationY;
-    },
-    resetTranslation: function () {
-      this.translation[0] = 0;
-      this.translation[1] = 0;
-    },
-    rotate: function(rotation) {
-      this.rotation += rotation;
-      while (this.rotation < 0) {
-        this.rotation += 360;
-      }
-      while (this.rotation > 360) {
-        this.rotation -= 360;
-      }
-    },
-    resetRotation: function () {
-      this.rotation = 0;
-    },
-    scale: function(scaling) {
-      Vector.add(this.scaling, scaling);
-    },
-    scaleX: function(scalingX) {
-      this.scaling[0] += scalingX;
-    },
-    scaleY: function(scalingY) {
-      this.scaling[1] += scalingY;
-    },
-    resetScaling: function () {
-      this.scaling[0] = 1;
-      this.scaling[1] = 1;
-    }
-  });
 }
+
+Transform.prototype = {
+  translate: function(translation) {
+    Vector.add(this.translation, translation);
+  },
+  translateX: function(translationX) {
+    this.translation[0] += translationX;
+  },
+  translateY: function(translationY) {
+    this.translation[1] += translationY;
+  },
+  resetTranslation: function () {
+    this.translation[0] = 0;
+    this.translation[1] = 0;
+  },
+  rotate: function(rotation) {
+    this.setRotation(this.rotation + rotation);
+  },
+  setRotation: function (rotation) {
+    this.rotation = rotation;
+    while (this.rotation < 0) {
+      this.rotation += 360;
+    }
+    while (this.rotation > 360) {
+      this.rotation -= 360;
+    }
+  },
+  resetRotation: function () {
+    this.rotation = 0;
+  },
+  scale: function(scaling) {
+    Vector.add(this.scaling, scaling);
+  },
+  scaleX: function(scalingX) {
+    this.scaling[0] += scalingX;
+  },
+  scaleY: function(scalingY) {
+    this.scaling[1] += scalingY;
+  },
+  resetScaling: function () {
+    this.scaling[0] = 1;
+    this.scaling[1] = 1;
+  }
+};
 
 var Graphics = {
   createDisplay: function (aspectRatio, selector) {
@@ -499,6 +540,9 @@ var Square = {
     },
     update: function () {
       this.body.update();
+      var radians = Math.atan2(mouseY - this.pos[1], mouseX - this.pos[0]);
+      var angle = radians * 180 / Math.PI;
+      this.sprite.setRotation(angle);
       this.sprite.update();
     }
   },
@@ -508,7 +552,7 @@ var Square = {
     var square = Object.assign(Object.create(proto), {
       pos: pos,
       body: Physics.createBody(proto.type).spawn(pos, display.size),
-      sprite: display.createSprite(pos, proto.type.size).fill(proto.color).rotate(45)
+      sprite: display.createSprite(pos, proto.type.size).fill(proto.color)
     });
     return square
   }
@@ -523,6 +567,14 @@ function handleKeys(event) {
 
 window.addEventListener("keydown", handleKeys);
 window.addEventListener("keyup",   handleKeys);
+var mouseX = display.width  / 2;
+var mouseY = display.height / 2;
+window.addEventListener("mousemove", function (event) {
+  var rect = display.rect;
+  var unit = display.unit;
+  mouseX = (event.pageX - rect.left) / unit;
+  mouseY = (event.pageY - rect.top)  / unit;
+});
 
 var keybindings = {
   ArrowLeft:  Vector.LEFT,

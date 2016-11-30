@@ -129,6 +129,7 @@ Display.prototype = {
     }
     el.width  = width
     el.height = height
+    this.rect = el.getBoundingClientRect()
     this.unit = width / scale
     this.draw()
   },
@@ -190,6 +191,46 @@ function Sprite(pos, size, display) {
       this.draw()
       return this
     },
+    getCorners: function(size, angle) {
+      angle = (angle + 90)
+      var outerSize = Vector.magnitude([size, size])
+      var topLeft = [0, 0]
+      var topRight = Vector.scaled(Vector.fromAngle(angle), size)
+      var bottomLeft = Vector.scaled(Vector.fromAngle(angle + 90), size)
+      var bottomRight = Vector.scaled(Vector.fromAngle(angle + 45), outerSize)
+      var corners = [topLeft, topRight, bottomLeft, bottomRight]
+      return corners
+    },
+    drawRotation: function (angle) {
+      var el = this.el
+      var ctx = this.context
+      var size = 2 * 16
+      var corners = this.getCorners(size, angle)
+      var x = corners.sort(function(a, b) { return a[0] - b[0] })[0][0]
+      var y = corners.sort(function(a, b) { return a[1] - b[1] })[0][1]
+      var topLeft = [x, y]
+      var x = corners.sort(function(a, b) { return b[0] - a[0] })[0][0]
+      var y = corners.sort(function(a, b) { return b[1] - a[1] })[0][1]
+      var bottomRight = [x, y]
+      var outerSize = Math.abs(bottomRight[1] - topLeft[1])
+      el.width = el.height = outerSize
+      ctx.clearRect(0, 0, size, size)
+      ctx.fillStyle = _fill
+      ctx.translate(-topLeft[0], -topLeft[1])
+      ctx.rotate(angle * Math.PI / 180)
+      ctx.fillRect(0, 0, size, size)
+      this.size = [outerSize / 16, outerSize / 16]
+    },
+    rotate: function (angle) {
+      this.transform.rotate(angle)
+      this.drawRotation(this.transform.rotation)
+      return this
+    },
+    setRotation: function (angle) {
+      this.transform.setRotation(angle)
+      this.drawRotation(this.transform.rotation)
+      return this
+    },
     draw: function () {
       var unit = this.display.unit
       var ctx = this.display.context
@@ -244,10 +285,6 @@ Sprite.prototype = {
   },
   update: function () {
     this.redraw()
-  },
-  rotate: function (angle) {
-    this.transform.rotate(angle)
-    return this
   }
 }
 
@@ -255,46 +292,50 @@ function Transform() {
   this.translation = [0, 0]
   this.rotation    = 0
   this.scaling     = [1, 1]
-  Object.assign(this, {
-    translate: function(translation) {
-      Vector.add(this.translation, translation)
-    },
-    translateX: function(translationX) {
-      this.translation[0] += translationX
-    },
-    translateY: function(translationY) {
-      this.translation[1] += translationY
-    },
-    resetTranslation: function () {
-      this.translation[0] = 0
-      this.translation[1] = 0
-    },
-    rotate: function(rotation) {
-      this.rotation += rotation
-      while (this.rotation < 0) {
-        this.rotation += 360
-      }
-      while (this.rotation > 360) {
-        this.rotation -= 360
-      }
-    },
-    resetRotation: function () {
-      this.rotation = 0
-    },
-    scale: function(scaling) {
-      Vector.add(this.scaling, scaling)
-    },
-    scaleX: function(scalingX) {
-      this.scaling[0] += scalingX
-    },
-    scaleY: function(scalingY) {
-      this.scaling[1] += scalingY
-    },
-    resetScaling: function () {
-      this.scaling[0] = 1
-      this.scaling[1] = 1
+}
+
+Transform.prototype = {
+  translate: function(translation) {
+    Vector.add(this.translation, translation)
+  },
+  translateX: function(translationX) {
+    this.translation[0] += translationX
+  },
+  translateY: function(translationY) {
+    this.translation[1] += translationY
+  },
+  resetTranslation: function () {
+    this.translation[0] = 0
+    this.translation[1] = 0
+  },
+  rotate: function(rotation) {
+    this.setRotation(this.rotation + rotation)
+  },
+  setRotation: function (rotation) {
+    this.rotation = rotation
+    while (this.rotation < 0) {
+      this.rotation += 360
     }
-  })
+    while (this.rotation > 360) {
+      this.rotation -= 360
+    }
+  },
+  resetRotation: function () {
+    this.rotation = 0
+  },
+  scale: function(scaling) {
+    Vector.add(this.scaling, scaling)
+  },
+  scaleX: function(scalingX) {
+    this.scaling[0] += scalingX
+  },
+  scaleY: function(scalingY) {
+    this.scaling[1] += scalingY
+  },
+  resetScaling: function () {
+    this.scaling[0] = 1
+    this.scaling[1] = 1
+  }
 }
 
 export default {

@@ -18,6 +18,9 @@ var Square = {
     },
     update: function () {
       this.body.update()
+      var radians = Math.atan2(mouseY - this.pos[1], mouseX - this.pos[0])
+      var angle = radians * 180 / Math.PI
+      this.sprite.setRotation(angle)
       this.sprite.update()
     }
   },
@@ -27,7 +30,7 @@ var Square = {
     var square = Object.assign(Object.create(proto), {
       pos: pos,
       body: Physics.createBody(proto.type).spawn(pos, display.size),
-      sprite: display.createSprite(pos, proto.type.size).fill(proto.color).rotate(45)
+      sprite: display.createSprite(pos, proto.type.size).fill(proto.color)
     })
     return square
   }
@@ -42,6 +45,14 @@ function handleKeys(event) {
 
 window.addEventListener("keydown", handleKeys)
 window.addEventListener("keyup",   handleKeys)
+var mouseX = display.width  / 2
+var mouseY = display.height / 2
+window.addEventListener("mousemove", function (event) {
+  var rect = display.rect
+  var unit = display.unit
+  mouseX = (event.pageX - rect.left) / unit
+  mouseY = (event.pageY - rect.top)  / unit
+})
 
 var keybindings = {
   ArrowLeft:  Vector.LEFT,
