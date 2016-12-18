@@ -1,3 +1,5 @@
+var Display = {}
+
 var displays = []
 var listening = false
 function listen() {
@@ -29,8 +31,8 @@ function create(aspectRatio) {
   display.canvasWidth  = canvas.width  = null
   display.canvasHeight = canvas.height = null
 
-  display.context = canvas.getContext('2d')
   display.parent  = null
+  display.context = canvas.getContext('2d')
 
   display.backgroundColor = 'black'
 
@@ -74,6 +76,7 @@ function refit(display) {
   if (width !== display.canvasWidth || height !== display.canvasHeight) {
     canvas.width  = display.canvasWidth  = width
     canvas.height = display.canvasHeight = height
+    display.context.imageSmoothingEnabled = false
     clear(display)
     render(display)
   }
@@ -103,7 +106,11 @@ function clear(display, rect) {
 
 function render(display, scene) {
   if (!display) throw 'GraphicsError: Failed to render `display` ' + display
-  scene = display.scene = scene || display.scene
+  scene = scene || display.scene
+  if (scene && scene !== display.scene) {
+    display.scene = scene
+    clear(display)
+  }
   if (!scene) return null
   var canvas  = display.canvas
   var context = display.context
@@ -118,11 +125,11 @@ function getAspectRatio(display) {
   return display.width / display.height
 }
 
-module.exports = {
+module.exports = Object.assign(Display, {
   create: create,
   mount:  mount,
   clear:  clear,
   render: render,
   getCenter: getCenter,
   getAspectRatio: getAspectRatio
-}
+})

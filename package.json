@@ -8,10 +8,14 @@
     "url": "https://github.com/semibran/graphics.git"
   },
   "scripts": {
-    "start": "watchify src/index.js -o graphics.js -v"
+    "start": "npm-run-all --parallel serve watch",
+    "serve": "browser-sync start --server --no-ui --serveStatic \"docs\" --files \"./graphics.js, docs\"",
+    "watch": "watchify src/index.js -o graphics.js -v"
   },
   "license": "MIT",
   "devDependencies": {
+    "browser-sync": "^2.18.5",
+    "npm-run-all": "^3.1.2",
     "watchify": "^3.8.0"
   }
 }

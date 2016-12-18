@@ -1,4 +1,7 @@
 var Scene = require('./scene')
+var Text  = require('./text')
+
+var Sprite = {}
 
 var numbers = '0123456789'
 var letters = 'abcdefghijklmnopqrstuvwxyz'
@@ -30,7 +33,9 @@ function create(type) {
   return sprite
 }
 
-function render(sprite) {
+function render(sprite, force) {
+  if (sprite.type === Text) return Text.render(sprite)
+
   var canvas  = sprite.canvas
   var context = sprite.context
   var size    = sprite.size
@@ -43,20 +48,33 @@ function render(sprite) {
     context.fillRect(0, 0, width, height)
   }
 
-  Scene.render(sprite)
+  parent = sprite
+  while (parent) {
+    Scene.render(parent, true)
+    parent = parent.parent
+  }
 }
 
 function resize(sprite, size) {
-  var width  = size[0]
-  var height = size[1]
-  var canvas = sprite.canvas
+  var width   = size[0]
+  var height  = size[1]
+  var canvas  = sprite.canvas
+  var context = sprite.context
   sprite.size   = size
   canvas.width  = width
   canvas.height = height
+  context.imageSmoothingEnabled = false
 }
 
-module.exports = Object.assign({}, Scene, {
+function getCenter(sprite) {
+  var size = sprite.size
+  return [size[0] / 2, size[1] / 2]
+}
+
+module.exports = Object.assign(Sprite, Scene, {
   create: create,
   render: render,
-  resize: resize
+  resize: resize,
+
+  getCenter: getCenter
 })
