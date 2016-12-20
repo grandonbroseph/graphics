@@ -37,7 +37,7 @@ function create(aspect) {
 
   var _parent  = null
 
-  var units = 256
+  var units = 512
 
   var display  = {
     aspect: aspect,

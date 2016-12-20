@@ -23,22 +23,45 @@
 
   var Layer   = Graphics.Layer
   var Box     = Graphics.Box
+  var Text    = Graphics.Text
 
   var display = Display.create()
   display.mount('#app')
 
+  var box = Box.create({
+     width: 96,
+    height: 48,
+      fill: 'dodgerblue',
+    stroke: 'white'
+  }, display.center)
+
+  var greeting = Text.create('Hello world!', box.center)
+
+  Node.add(box, greeting)
+
   var foreground = Layer.create({
     id: 'foreground',
-    children: [
-      Box.create({
-         width: 96,
-        height: 128,
-          fill: 'dodgerblue',
-        stroke: 'white'
-      }, display.center)
-    ]
+    children: [ box ]
   })
 
   var layers = [foreground]
-  display.render(layers)
+
+  var degree   = 0
+  var distance = 16
+  var speed    = 3
+  function update() {
+
+    var radians = degree * Math.PI / 180
+    box.pos.x = display.center[0] + Math.cos(radians) * distance
+    box.pos.y = display.center[1] + Math.sin(radians) * distance
+
+    degree += speed
+    while (degree > 360) degree -= 360
+  }
+
+  ;(function loop() {
+    update()
+    display.render(layers)
+    requestAnimationFrame(loop)
+  })()
 </script>
