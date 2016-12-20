@@ -1,15 +1,27 @@
-var Graphics = window.Graphics = window.Graphics || {
+var Graphics = {
   load: function (imagePath, done) {
     var image = new window.Image()
-    // image.crossOrigin = 'anonymous'
     image.src = imagePath
     image.onload = function () {
       done.call(window, image)
     }
   },
-  Display:    require('./modules/display'),
-  Scene:      require('./modules/scene'),
-  Sprite:     require('./modules/sprite'),
-  Text:       require('./modules/text'),
-  ImageFont:  require('./modules/image-font')
+  Display: require('./modules/display'),
+     Node: require('./modules/node')
 }
+
+var types = Graphics.Node.types
+var i     = types.length
+while (i--) {
+  var type = types[i]
+  Graphics[type] = function (type) {
+    return {
+      create: function (options, pos) {
+        var node = Node.create(type, options, pos)
+        return node
+      }
+    }
+  }(type)
+}
+
+window.Graphics = window.Graphics || Graphics

@@ -1,0 +1,44 @@
+<style>
+  html, body {
+    margin: 0;
+    overflow: hidden;
+  }
+  #app, #app * {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+  }
+  .display {
+    background: black;
+  }
+</style>
+<div id='app'></div>
+<script src='../graphics.js'></script>
+<script>
+  var Display = Graphics.Display
+  var Node    = Graphics.Node
+
+  var Layer   = Graphics.Layer
+  var Box     = Graphics.Box
+
+  var display = Display.create()
+  display.mount('#app')
+
+  var foreground = Layer.create({
+    id: 'foreground',
+    children: [
+      Box.create({
+         width: 96,
+        height: 128,
+          fill: 'dodgerblue',
+        stroke: 'white'
+      }, display.center)
+    ]
+  })
+
+  var layers = [foreground]
+  display.render(layers)
+</script>

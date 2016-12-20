@@ -1,135 +1,132 @@
-var Display = {}
+var Node = require('./node')
 
-var displays = []
-var listening = false
+var _displays = []
+var _listening = false
+
 function listen() {
-  window.addEventListener("resize", onWindowResize)
-  listening = true
+  window.addEventListener('resize', onWindowResize)
+  _listening = true
 }
 
-var resized = false
+var _resized = false
 function onWindowResize() {
-  if (!resized) {
+  if (!_resized) {
     requestAnimationFrame(resize)
   }
-  resized = true
+  _resized = true
 }
 
 function resize() {
-  for (var i = displays.length; i--; refit(displays[i]));
-  resized = false
+  var i = _displays.length
+  while (i--) {
+    var display = _displays[i]
+    display.refit()
+  }
+  _resized = false
 }
 
-function create(aspectRatio) {
-  aspectRatio = aspectRatio || 4 / 3
+function create(aspect) {
+  aspect = aspect || 4 / 3
 
-  var display = {}
-  display.scene   = null
+  // Private variables
+  var _layers = []
 
-  var canvas
-  display.canvas       = canvas = document.createElement('canvas')
-  display.canvasWidth  = canvas.width  = null
-  display.canvasHeight = canvas.height = null
+  var _element       = null
+  var _elementWidth  = 0
+  var _elementHeight = 0
 
-  display.parent  = null
-  display.context = canvas.getContext('2d')
+  var _parent  = null
 
-  display.backgroundColor = 'black'
+  var units = 256
 
-  var width
-  display.width  = width = 256
-  display.height = width * (1 / aspectRatio)
+  var display  = {
+    aspect: aspect,
+    center: [units / 2, units * (1 / aspect) / 2],
+     mount: mount,
+     refit: refit,
+    render: render
+  }
+  function mount(parent) {
+    if (typeof parent === 'string') {
+      parent = document.querySelector(parent)
+    }
+    if (!parent) throw 'GraphicsError: Cannot mount display on parent `' + parent + '`'
+    var element = document.createElement('div')
+    element.className = 'display'
+    parent.appendChild(element)
 
-  displays.push(display)
-  if (!listening) {
+    _parent  = parent
+    _element = element
+
+    refit()
+  }
+
+  function refit() {
+    if (!_element) throw 'GraphicsError: Cannot refit display before mount'
+
+    var parentRect   = _parent.getBoundingClientRect()
+    var parentWidth  = parentRect.width
+    var parentHeight = parentRect.height
+
+    var height = parentHeight
+    var width  = height * aspect
+
+    if (width > parentWidth) {
+      width  = parentWidth
+      height = width * (1 / aspect)
+    }
+
+    width  = Math.ceil(width)
+    height = Math.ceil(height)
+
+    if (width !== _elementWidth || height !== _elementHeight) {
+      _element.style.width  = _elementWidth  = width
+      _element.style.height = _elementHeight = height
+      clear()
+      render(_layers, true)
+    }
+  }
+
+  function clear() {
+    _layers.forEach(Node.clear)
+  }
+
+  function render(layers, force) {
+    layers = layers || _layers
+    if (!_element) throw 'GraphicsError: Cannot render display before mount'
+    if (!layers)   throw 'GraphicsError: Cannot render display layers `' + layers + '`'
+    var i = 0, max = layers.length
+    while (i < max) {
+      var layer  = layers[i]
+      var _layer = _layers[i]
+      var canvas = layer.context.canvas
+      if (layer !== _layer) {
+        if (canvas.parentNode !== _element) {
+          if (_layer) {
+            _element.insertBefore(_layer, canvas)
+          } else {
+            _element.appendChild(canvas)
+          }
+        }
+      }
+      if (canvas.width !== _elementWidth || canvas.height !== _elementHeight) {
+        canvas.width  = _elementWidth
+        canvas.height = _elementHeight
+      }
+      Node.render(layer)
+      i++
+    }
+    _layers = layers
+  }
+
+  _displays.push(display)
+  if (!_listening) {
     listen()
   }
 
   return display
 }
 
-function mount(display, parent) {
-  if (!display) throw 'GraphicsError: Failed to mount display `' + display + '`'
-  if (typeof parent === 'string') {
-    parent = document.querySelector(parent)
-  }
-  if (!parent)  throw 'GraphicsError: Failed to mount `display` on parent `' + parent + '`'
-  display.parent = parent
-  parent.appendChild(display.canvas)
-  refit(display)
+module.exports = {
+  create: create
 }
-
-function refit(display) {
-  var canvas = display.canvas
-  var parent = display.parent
-  if (!parent) throw 'GraphicsError: `Display` cannot fit to parent `' + parent + '`'
-  var parentRect   = parent.getBoundingClientRect()
-  var parentWidth  = parentRect.width
-  var parentHeight = parentRect.height
-  var aspectRatio  = getAspectRatio(display)
-  var height = parentHeight
-  var width  = height * aspectRatio
-  if (width > parentWidth) {
-    width  = parentWidth
-    height = width * (1 / aspectRatio)
-  }
-  if (width !== display.canvasWidth || height !== display.canvasHeight) {
-    canvas.width  = display.canvasWidth  = width
-    canvas.height = display.canvasHeight = height
-    display.context.imageSmoothingEnabled = false
-    clear(display)
-    render(display)
-  }
-}
-
-function clear(display, rect) {
-  if (!display) throw 'GraphicsError: Failed to clear `display` ' + display
-  var canvas  = display.canvas
-  var context = display.context
-  var x, y, width, height
-
-  if (rect) {
-    x      = rect[0]
-    y      = rect[1]
-    width  = rect[2]
-    height = rect[3]
-  } else {
-    x = 0
-    y = 0
-    width  = canvas.width
-    height = canvas.height
-  }
-
-  context.fillStyle = display.backgroundColor
-  context.fillRect(x, y, width, height)
-}
-
-function render(display, scene) {
-  if (!display) throw 'GraphicsError: Failed to render `display` ' + display
-  scene = scene || display.scene
-  if (scene && scene !== display.scene) {
-    display.scene = scene
-    clear(display)
-  }
-  if (!scene) return null
-  var canvas  = display.canvas
-  var context = display.context
-  context.drawImage(scene.canvas, 0, 0, canvas.width, canvas.height)
-}
-
-function getCenter(display) {
-  return [display.width / 2, display.height / 2]
-}
-
-function getAspectRatio(display) {
-  return display.width / display.height
-}
-
-module.exports = Object.assign(Display, {
-  create: create,
-  mount:  mount,
-  clear:  clear,
-  render: render,
-  getCenter: getCenter,
-  getAspectRatio: getAspectRatio
-})
