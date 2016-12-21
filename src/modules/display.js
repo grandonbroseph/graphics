@@ -39,9 +39,15 @@ function create(aspect) {
 
   var units = 512
 
+  var width  = units
+  var height = width * (1 / aspect)
+  var center = [width / 2, height / 2]
+
   var display  = {
     aspect: aspect,
-    center: [units / 2, units * (1 / aspect) / 2],
+     width: width,
+    height: height,
+    center: center,
      mount: mount,
      refit: refit,
     render: render

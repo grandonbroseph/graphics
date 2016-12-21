@@ -6,8 +6,9 @@ var Graphics = {
       done.call(window, image)
     }
   },
-  Display: require('./modules/display'),
-     Node: require('./modules/node')
+    Display: require('./modules/display'),
+       Node: require('./modules/node'),
+  Transform: require('./modules/transform')
 }
 
 var types = Graphics.Node.types

@@ -2,6 +2,7 @@
   html, body {
     margin: 0;
     overflow: hidden;
+    background: black;
   }
   #app, #app * {
     position: absolute;
@@ -12,7 +13,7 @@
     margin: auto;
   }
   .display {
-    background: black;
+    background: white;
   }
 </style>
 <div id='app'></div>
@@ -28,40 +29,95 @@
   var display = Display.create()
   display.mount('#app')
 
+  var gradient = Box.create({
+     width: display.width,
+    height: display.height,
+      fill: ['purple', 'orange'],
+    origin: 'top-left'
+  })
+
   var box = Box.create({
      width: 96,
     height: 48,
-      fill: 'dodgerblue',
-    stroke: 'white'
+      fill: 'white',
+    stroke: 'dodgerblue'
   }, display.center)
 
-  var greeting = Text.create('Hello world!', box.center)
+  var greeting = Text.create({
+    text: 'Hello World!',
+    font: {
+      fill: 'dodgerblue'
+    }
+  }, box.center)
 
   Node.add(box, greeting)
+
+  var background = Layer.create({
+    id: 'background',
+    children: [ gradient ]
+  })
 
   var foreground = Layer.create({
     id: 'foreground',
     children: [ box ]
   })
 
-  var layers = [foreground]
+  var layers = [ background, foreground ]
 
   var degree   = 0
-  var distance = 16
-  var speed    = 3
+  var distance = 128
+  var speed    = 0.25
+
+  var scalingMin   = 1
+  var scalingMax   = 1.25
+  var scalingSpeed = 0.005
+  var scaling      = scalingMin
+
   function update() {
 
-    var radians = degree * Math.PI / 180
+    var radians = (degree - 90) * Math.PI / 180
     box.pos.x = display.center[0] + Math.cos(radians) * distance
     box.pos.y = display.center[1] + Math.sin(radians) * distance
+
+    scaling += scalingSpeed
+    if (scaling > scalingMax) {
+      scaling = scalingMax
+      scalingSpeed *= -1
+    }
+    if (scaling < scalingMin) {
+      scaling = scalingMin
+      scalingSpeed *= -1
+    }
+
+    Node.rotate(box, 0.5)
 
     degree += speed
     while (degree > 360) degree -= 360
   }
 
+  var keys = {}
+
+  function onKeyDown(event) {
+    keys[event.code] = true
+  }
+
+  function onKeyUp(event) {
+    keys[event.code] = false
+  }
+
+  window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup',   onKeyUp)
+
+  var paused = false
   ;(function loop() {
-    update()
-    display.render(layers)
+    if (!paused) {
+      update()
+      display.render(layers)
+      // paused = true
+    }
+    if (keys.KeyP) {
+      paused = true
+    }
     requestAnimationFrame(loop)
   })()
 </script>
