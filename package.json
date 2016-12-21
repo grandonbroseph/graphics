@@ -9,8 +9,8 @@
   },
   "scripts": {
     "start": "npm-run-all --parallel serve watch",
-    "serve": "browser-sync start --server --no-ui --serveStatic docs --files \"./graphics.js, docs\"",
-    "watch": "watchify src/index.js -o graphics.js -v"
+    "serve": "browser-sync start --server --no-ui --serveStatic docs --files docs",
+    "watch": "watchify src/index.js -o docs/graphics.js -v"
   },
   "license": "MIT",
   "devDependencies": {
